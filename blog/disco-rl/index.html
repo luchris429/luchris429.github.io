@@ -1,0 +1,585 @@
+<!--
+  Copyright 2018 The Distill Template Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!doctype html>
+
+<head>
+  <title>Discovery via Accelerated Evolutionary Meta-Learning</title>
+  <!-- <title>Really Fast Reinforcement</title> -->
+  <meta name="description" content="Web publication for &quot;Discovered Policy Optimisation&quot;." />
+  <!-- TODO: Need to add urls to images for metadata -->
+  <meta property="og:url" content="https://wesolvedagi.github.io" />
+  <meta property="og:title" content="Discovery via Accelerated Evolutionary Meta-Learning" />
+  <meta property="og:description"
+    content="Web publication for &quot;Discovery via Accelerated Evolutionary Meta-Learning&quot;" />
+  <meta property="og:image" content="og-image.png" />
+  <meta property="og:image:url" content="og-image.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Discovery via Accelerated Evolutionary Meta-Learning" />
+  <meta name="twitter:description"
+    content="Web publication for &quot;Discovery via Accelerated Evolutionary Meta-Learning&quot;." />
+  <meta name="twitter:image" content="" />
+  <meta name="twitter:image:secure_url" content="" />
+
+  <script>
+    console.log = function () { };
+    console.groupCollapsed = function () { };
+    console.debug = function () { };
+  </script>
+  <script src="dist/template.v2.js"></script>
+  <link rel="stylesheet" href="dist/bootstrap.forms.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+  <!-- Uncomment imports below if you want to run TF.js models in browser -->
+  <!-- <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script> -->
+  <script defer src="https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+  <script src=https://cdnjs.cloudflare.com/ajax/libs/seedrandom/2.3.10/seedrandom.min.js></script>
+
+  <link rel="stylesheet" href="dist/demo.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf8">
+  <style>
+    /* Three image containers (use 25% for four, and 50% for two, etc) */
+    .column {
+      float: left;
+      width: 33.33%;
+      /* padding: 5px; */
+    }
+
+    /* Clear floats after image containers */
+    .row::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+  </style>
+  <base target="_blank">
+</head>
+
+<body>
+  <d-front-matter>
+    <script id='distill-front-matter' type="text/json">{
+    "title": "Discovery via Accelerated Evolutionary Meta-Learning",
+    "description": "Training agents 1000x faster using JAX",
+    "published": "October 14, 2022",
+    "pubUrl": "https://arxiv.org/",
+    "pubVenue": "arXiv",
+    "authors": [
+      {
+        "author":"Chris Lu",
+        "authorURL":"https://chrislu.page",
+        "affiliations": [
+          {"name": "University of Oxford", "url":"https://twitter.com/_chris_lu_"}]
+      }
+    ],
+    "katex": {
+      "delimiters": [
+        {"left": "$$", "right": "$$", "display": false}
+      ]
+    }
+  }</script>
+  </d-front-matter>
+  <div id='cover'>
+    <div id="cover-video-tint"></div>
+    <d-title id="title">
+    </d-title>
+  </div>
+  <d-byline></d-byline>
+
+  <d-article>
+    <h2>TL;DR</h2>
+    <p>
+      We leverage recent advancements in JAX to train RL agents 1000x faster. This lets us do some pretty cool things.
+    </p>
+
+    <h2>Overview</h2>
+
+    <p>
+      This blog post is about a new computational and experimental paradigm that powers many recent and ongoing works at
+      the Foerster Lab for AI Research (FLAIR) that we call "Discovery via Accelerated Evolutionary Meta-Learning
+      (AEML)". We believe that the techniques that power this paradigm have the potential to radically accelerate the
+      rate of progress in Deep Reinforcement Learning (RL) algorithms and applications by more heavily utilising GPU
+      resources, enabled by recent advancements in JAX. AEML vastly lowers the computational barrier of entry to Deep RL
+      research, enabling academic labs to perform research using trillions of frames (closing the gap with industry
+      research labs) and enabling independent researchers to get orders of magnitude more mileage out of limited
+      hardware.
+    </p>
+
+    <p>
+      This blog post will be roughly split into two parts. The first will be about the computational techniques that
+      enable this paradigm, and the second will be about how we can effectively leverage these techniques to deepen our
+      understanding of RL agents and algorithms with meta-learning. We will then briefly describe three recent papers
+      from our lab that utilised this framework to great extent:
+    </p>
+
+    <ul>
+      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2205.01447">Model-Free Opponent Shaping</a></li>
+      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2210.05639">Discovered Policy Optimisation</a>
+      </li>
+      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk</a></li>
+    </ul>
+
+    <h2>Part 1: Accelerating Reinforcement Learning with JAX</h2>
+
+    <h3>Section 1.1: Run Everything on the GPU!</h3>
+
+    <p>
+      Most Deep RL implementations run on a combination of CPU and GPU resources. Usually, the environments run on the
+      CPU while the policy neural network and algorithms run on the GPU. Oftentimes, to increase the wallclock time,
+      practitioners will run multiple environments in parallel using multiple threads. For reference, we will look at
+      Costa Huang's amazing <a href="https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py">CleanRL library</a>
+      for an example of a well-benchmarked implementation of PPO.
+    </p>
+
+    <p>
+      Instead of using multiple threads for our environment, we can use Jax to easily <i>vectorise</i> the environment
+      on the GPU! If we program our environment using Jax primitives, we can use Jax's amazing <i>vmap</i> function to
+      instantly create a vectorised version of the environment. This means that the environments run in parallel on the
+      GPU! Luckily for us, there are a few libraries that have already done this for us for a variety of RL
+      environments!
+    </p>
+
+    <p>
+      There are a few libraries that we highly recommend and complement each other well:
+
+    <ul>
+      <li style="list-style-type:circle"><a href="https://github.com/RobertTLange/gymnax">Gymnax</a> is an awesome
+        library that contains several well-known environments such as Classic Control tasks, Bsuite tasks, and Minatar
+        (atari-like) environments. I use it as the go-to library for testing and evaluating my code, and is the one we
+        will be using for this blog post. It has a lot of other really neat features (such as vmappable environment
+        configs!!!) and is very easy to use.
+        <a href="https://github.com/RobertTLange/gymnax">
+          <div class="row">
+            <div class="column">
+              <img src="dist/gifs/gymnax/CartPole-v1.gif" alt="Gymnax-CartPole" style="width:100.0%">
+            </div>
+            <div class="column">
+              <img src="dist/gifs/gymnax/Catch-bsuite.gif" alt="Gymnax-Catch-Bsuite" style="width:100.0%">
+            </div>
+            <div class="column">
+              <img src="dist/gifs/gymnax/Breakout-MinAtar.gif" alt="Gymnax-Breakout-MinAtar" style="width:100.0%">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="column">
+              <img src="dist/gifs/gymnax/MountainCarContinuous-v0.gif" alt="Gymnax-MountainCar" style="width:100.0%">
+            </div>
+            <div class="column">
+              <img src="dist/gifs/gymnax/MetaMaze-misc.gif" alt="Gymnax-MetaMaze" style="width:100.0%">
+            </div>
+            <div class="column">
+              <img src="dist/gifs/gymnax/SpaceInvaders-MinAtar.gif" alt="Gymnax-SpaceInvaders-MinAtar"
+                style="width:100.0%">
+            </div>
+          </div>
+        </a>
+
+      </li>
+      <li style="list-style-type:circle"><a href="https://github.com/google/brax">Brax</a> is <b>the</b> way to run
+        Mujoco-like continuous control environments using Jax. The library has many RL environments that are directly
+        analogous to popular continuous control environments, such as HalfCheetah and Humanoid. It's also
+        differentiable!</li>
+
+      <a href="https://github.com/google/brax">
+        <div class="row">
+          <div class="column">
+            <img src="dist/gifs/brax/humanoid.gif" alt="Brax-Humanoid" style="width:100.0%">
+          </div>
+          <div class="column">
+            <img src="dist/gifs/brax/halfcheetah.gif" alt="Brax-HalfCheetah" style="width:100.0%">
+          </div>
+          <div class="column">
+            <img src="dist/gifs/brax/fetch.gif" alt="Brax-Fetch" style="width:100.0%">
+          </div>
+        </div>
+      </a>
+
+      <li style="list-style-type:circle"><a href="https://github.com/instadeepai/jumanji">Jumanji</a> contains a lot of
+        incredibly cool, simple, and industry-driven environments. Many of the environments in this library come
+        directly from industry settings, ensuring that the environments presented here are practical and relevant for
+        the real-world! These include combinatorial problems such as the famous Traveling Salesman Problem or 3D Bin
+        Packing.</li>
+
+      <a href="https://github.com/instadeepai/jumanji">
+        <div class="row">
+          <div class="column">
+            <img src="dist/gifs/jumanji/snake.gif" alt="Jumanji-Snake" style="width:100.0%">
+          </div>
+          <div class="column">
+            <img src="dist/gifs/jumanji/routing.gif" alt="Jumanji-Routing" style="width:100.0%">
+          </div>
+          <div class="column">
+            <img src="dist/gifs/jumanji/binpack.gif" alt="Jumanji-Binpack" style="width:100.0%">
+          </div>
+        </div>
+      </a>
+    </ul>
+    </p>
+
+    <p>
+      Let's take a look at some of the <a href="https://github.com/RobertTLange/gymnax-blines">reported speedups for
+        Gymnax below.</a> CartPole-v1 in numpy, with 10 environments running in parallel, takes 46 seconds to reach one
+      million frames frames. Using Gymnax on an A100, with 2k environments in parallel, it takes <i>0.05 seconds</i>.
+      That's a <i>1000x</i> speedup. This applies to environments more complicated than CartPole-v1 as well. For
+      example, Minatar-Breakout, which takes 50 seconds to reach one million frames on CPU only takes <i>0.2 seconds</i>
+      in Gymnax. These results show an improvement of <i>several orders of magnitude,</i> enabling academic researchers
+      to easily run experiments that potentially involve <i>trillions</i> of frames on limited hardware.
+    </p>
+    <a href="https://github.com/RobertTLange/gymnax-blines/blob/main/docs/speed.png">
+      <img src="dist/img/speed.png" alt="Gymnax Speedups" style="width:100.0%">
+    </a>
+
+    <p>
+      Due to <a href="https://en.wikipedia.org/wiki/Amdahl%27s_law">Amdahl's Law</a>, this unfortunately does not equate
+      to a 1000x speedup in training time. However, it does mean that we can run many more environments in parallel,
+      which can lead to alternative training paradigms for RL. For example, <a
+        href="https://github.com/google/brax">Brax's PPO implementation</a> runs <i>2048</i> environments in parallel
+      with a short rollout length of 5. This is nearly the exact opposite of OpenAI Baseline's impelementation that runs
+      a single environment with a rollout length of 2048. While Brax's PPO ultimately ends up being less sample
+      efficient, it runs <i>significantly faster.</i> However, this type of wallclock speedup is not what this blog post
+      is mainly about.
+      <!-- TODO: EITHER FIGURE OUT HOW MUCH FASTER OR RUN THESE YOURSELF -->
+    </p>
+
+    <p>
+      There are many other advantages to doing everything end-to-end in Jax beyond just pure vectorisation. To name a
+      few:
+
+      <li style="list-style-type:circle">By keeping the computation entirely on the GPU, we avoid the overhead of
+        copying data back and forth between
+        the CPU and GPU, which is often a significant bottleneck.</li>
+      <li style="list-style-type:circle">By JIT compiling our implementation, we can
+        avoid the overhead of Python, which can sometimes block GPU computation between sending commands. </li>
+      <li style="list-style-type:circle">JIT-compilation can lead to significant speedups through operator fusion</li>
+      <li style="list-style-type:circle">It is fully synchronous. Multi-processing for running environments in
+        parallel is notoriously difficult to debug and leads to complicated infrastructure.</li>
+    </p>
+
+    <!-- CODEX WROTE THE ENTIRE PARAGRAPH BELOW...JUST KEEPING IT IN HERE AS A COMMENT -->
+    <!-- <p>
+      However, there are some disadvantages to doing everything in Jax. For one, it is not as easy to debug as
+      traditional Python. For example, if you make a mistake in your Jax code, you will get a Jax error, which is
+      often not very helpful. Secondly, it is not as easy to write custom environments. For example, if you want to
+      write a custom environment, you will have to write it in Jax. This is not a problem if you are already familiar
+      with Jax, but it can be a significant barrier to entry for new users. Thirdly, it is not as easy to write custom
+      algorithms. For example, if you want to write a custom algorithm, you will have to write it in Jax. This is not a
+      problem if you are already familiar with Jax, but it can be a significant barrier to entry for new users.
+    </p> -->
+
+    <p>
+      To demonstrate this, we closely replicated CleanRL's PyTorch PPO baseline implementation in pure Jax and jitted it
+      end-to-end. We used the same number of parallel environments and the same hyperparameter settings, so we're not
+      taking advantage of the massive environment vectorisation. We show the training plots below across 5 runs in
+      CartPole-v1 and MinAtar-Breakout.
+    </p>
+
+    <figure>
+      <div class="row">
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/cartpole_plot_frames.png" alt="CartPole-Frames" style="width:100.0%">
+        </div>
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/minatar_plot_frames.png" alt="MinAtar-Frames" style="width:100.0%">
+        </div>
+      </div>
+      <figcaption style="text-align: center;">Figure 1: CleanRL vs. Our Jax PPO on CartPole-v1 and MinAtar-Breakout. We
+        achieve nearly identical results given the same hyperparameters and number of frames.</figcaption>
+    </figure>
+
+    <p>
+      Now, let's swap out the x-axis for the wall-clock time instead of frames. It's over 10x faster without any extra
+      vectorsation.
+    </p>
+
+    <figure>
+      <div class="row">
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/cartpole_plot_seconds.png" alt="CartPole-Frames" style="width:100.0%">
+        </div>
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/minatar_plot_seconds.png" alt="MinAtar-Frames" style="width:100.0%">
+        </div>
+      </div>
+      <figcaption style="text-align: center;">Figure 2: CleanRL vs. Our Jax PPO on CartPole-v1 and MinAtar-Breakout. We
+        achieve the same results but over 10x faster!</figcaption>
+    </figure>
+
+    <h3>Section 1.2: Running Many Agents in Parallel</h3>
+
+    <p>
+      We got a pretty good speedup from the above tricks. However, it's far from the 1000x speedup in the headline. How
+      do we get there? By <u>vectorising the entire RL training loop.</u> This is really easy to do! Just use Jax's
+      <i>vmap</i> we mentioned before! Now we can train many agents in parallel! Furthermore, to run on multiple GPU's
+      we can just use Jax's convenient <i>pmap</i> function! Previously, this type of vectorisation both across and
+      <i>especially</i> within devices would have been a massive headache to write (believe me, I've tried).
+    </p>
+
+    <figure>
+      <div class="row">
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/cartpole_plot_parallel.png" alt="CartPole-Frames" style="width:100.0%">
+        </div>
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/minatar_plot_parallel.png" alt="MinAtar-Frames" style="width:100.0%">
+        </div>
+      </div>
+      <figcaption style="text-align: center;">Figure 3: CleanRL vs. Our Jax PPO on CartPole-v1 and MinAtar-Breakout. We
+        can parallelise the agent training itself! On CartPole-v1 we can train 2048 agents in about half the time it
+        takes to a train a single CleanRL agent!</figcaption>
+    </figure>
+
+    <p>
+      That's more like it! If you're developing a new RL algorithm, you can easily train on a statistically-significant
+      number of seeds <i>simultaneously on a single GPU</i>. Beyond that, we can we can easily train <i>thousands of
+        agents at the same time!</i> Why would we want to do that?
+    </p>
+
+    <!-- 
+    <div class="centered-content-container">
+      <figure>
+        <figcaption style="text-align: center;">Figure 1: This is an AGI that we created.</figcaption>
+        <video width="480" autoplay muted loop playsinline>
+          <source src="dist/video/terminator.mp4" type="video/mp4">
+        </video>
+      </figure>
+    </div> -->
+
+    <h2>Part 2: Discovery via Long-Horizon Evolutionary Meta-Learning</h2>
+
+    <p>
+      Very fast, convenient, and parallelisable RL training enables a new meta-learning framework that we use at FLAIR
+      to better analyse and understand the behavior of RL algorithms and agents. We call this framework "Discovery via
+      Meta-Evolution".
+    </p>
+
+    <p>
+      Meta-Learning is the idea of "Learning to Learn".
+      A very popular approach to do this is through using <i>meta-gradients</i>, or higher-order
+      derivatives. In essence, these methods, the most well-known of which is MAML, take derivativies <i>through their
+        own learning updates</i>. Using these types of techniques, we can optimise our parameters to take into account
+      learning updates, which can then be used to quickly adapt to new tasks.
+      Usually, this is taken in the context of fast adaptation, in which we train models that are able to <i>quickly
+        adapt</i> to similar, but unseen tasks with just a small number of samples. While this is useful for a narrow
+      domains, ideally we would like to be able to meta-learn more general purpose learning algorithms and principles
+      that can be more widely applied to a large range of tasks across many updates.
+    </p>
+
+    <p>
+      However, if we want to learn to learn across a <i>wide range</i> of tasks, we need to be able to
+      meta-learn across a large number of interactions. In the case of meta-learning <i>RL algorithms</i>, we need to
+      meta-learn across <i>millions</i> of timesteps and <i>thousands</i> of updates. Many papers have shown that
+      gradient-based methods do not perform well in this setting because they result in high variance updates. CITE.
+      Approaches that attempt to reduce this variance tend to increase bias.
+    </p>
+
+    <p>
+      Alternatively, we can use evolutionary methods to meta-learn across these long horizons. These methods don't take
+      explicit derivatives through their parameters and instead treat the underlying problem as a blackbox. If you want
+      to learn more about these methods, we highly recommend David Ha's <a
+        href="https://blog.otoro.net/2017/10/29/visual-evolution-strategies/">beautiful blog post on the topic.</a>
+      There are a few reasons these methods are very attractive for this setting. ES methods are:
+      <li style="list-style-type:circle"> Agnostic to the number of learning timesteps</li>
+      <li style="list-style-type:circle"> Not concerned with vanishing or exploding gradients</li>
+      <li style="list-style-type:circle"> Unbiased</li>
+      <li style="list-style-type:circle"> Lower variance</li>
+      <li style="list-style-type:circle"> Highly parallelisable</li>
+    </p>
+
+    <p>
+      At a high level, this is analogous to emergence of learning in real-world evolution -- animals <i>genetically
+        evolved</i> the ability to perform reinforcement learning in their brains.
+    </p>
+
+    <p>
+      One of the primary criticisms against these methods is that, although they are parallelisable, they are extremely
+      slow and sample inefficient, and usually require the ability to sample thousands of agents at the same time. If
+      only there was a way to efficiently do this!
+    </p>
+
+    <p>
+      A very nice library for doing this is <a href="https://github.com/RobertTLange/evosax">evosax</a>. We can easily
+      hook up our RL training loop to this library and use it to perform extremely fast meta-evolution entirely on the
+      GPU. Here's a simple example where we meta-learn the value loss function of a PPO agent on the CartPole-v1.
+    </p>
+
+    <p>
+      On a single A40, we train 512 agents for 1024 generations. In other words, we trained over half a million agents
+      in ~9 hours on a single GPU! The resulting learned value loss function is shown below.
+    </p>
+
+    <figure>
+      <div class="row">
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/meta_value_cartpole_plot_frames.png" alt="CartPole-Frames" style="width:100.0%">
+        </div>
+        <div class="column" style="width:50.0%">
+          <img src="dist/plots/meta_value_cartpole_meta.png" alt="MinAtar-Frames" style="width:100.0%">
+        </div>
+      </div>
+      <figcaption style="text-align: center;">Figure 4: Meta-Learning the Value Distance function. The resulting learned
+        distance function outperforms L2.</figcaption>
+    </figure>
+
+    <p>
+      Finally, we can try to visualise, interpret, and understand what the learned meta-parameters are doing. In this
+      case, we can simply plot the loss function below.
+    </p>
+
+    <figure>
+      <div class="row">
+        <img src="dist/plots/meta_value_cartpole_vis.png" alt="MinAtar-Frames" style="width:100.0%">
+        <figcaption style="text-align: center;">Figure 5: Meta-Learned Value Distance Function</figcaption>
+    </figure>
+
+    <p>That looks pretty interesting! That's pretty interesting and could call for further investigation.</p>
+
+    <p>
+      To summarise, this discovery framework involves:
+      <li style="list-style-type:circle">Running everything on the GPU by using Jax.</li>
+      <li style="list-style-type:circle">Meta-Learning across entire training trajectories with evolutionary methods.
+      </li>
+      <li style="list-style-type:circle">Interperting the learned meta-parameters to "discover" new insights about
+        learning algorithms.</li>
+    </p>
+
+    <h2>Part 3: Case Studies</h2>
+    <p>
+      This is a very powerful framework that we use at FLAIR to better understand the behavior of RL algorithms and have
+      used it in several published papers, which we will briefly describe below:
+    </p>
+
+    <h3>Discovered Policy Optimisation</h3>
+    <a href="https://arxiv.org/abs/2210.05639">
+      <p><b>Link</b></p>
+    </a>
+    <p><b>What we meta-learned:</b> Many existing RL algorithms can be described by a theoretical framework called
+      "Mirror Learning". We parameterise part of this space of algorithms with a neural network and meta-learn it to
+      discover a new algorithm that outperforms existing ones!</p>
+    <p><b>What we visualised:</b> We visualised what the learned loss function (LPO) looked like with respect to the
+      inputs.</p>
+    <img src="dist/img/dpo_vis.jpeg" alt="DPO Loss Visualisation" style="width:100.0%">
+    </p>
+    <p><b>What we discovered:</b> LPO rediscovers past ideas in the literature, like notions of rollback and optimism,
+      along with some novel features, which we combine to create a closed-form analytical version of the algorithm we
+      call DPO that outperforms PPO on unseen tasks.</p>
+    <img src="dist/img/dpo_results.jpeg" alt="DPO Results" style="width:100.0%">
+
+    <h3>Adversarial Cheap Talk</h3>
+    <a href="https://arxiv.org/abs/2211.11030">
+      <p><b>Link</b></p>
+    </a>
+    <p><b>What we meta-learned:</b> We append deterministic features to existing RL environments and show that we can
+      cause RL algorithms to completely fail or perform better, even though simply appending features should not
+      influence the underlying dynamics or optimal policy. In theory the RL agent should be able to ignore the appended
+      inputs!</p>
+    <a href="https://arxiv.org/abs/2211.11030">
+      <div class="row">
+        <div class="column">
+          <img src="dist/img/act_cartpole_curves.png" alt="ACT-CartPole" style="width:100.0%">
+        </div>
+        <div class="column">
+          <img src="dist/img/act_pendulum_curves.png" alt="ACT-Pendulum" style="width:100.0%">
+        </div>
+        <div class="column">
+          <img src="dist/img/act_reacher_curves.png" alt="ACT-Reacher" style="width:100.0%">
+        </div>
+      </div>
+    </a>
+    <a href="https://arxiv.org/abs/2211.11030">
+      <div class="row">
+        <div class="column" style="width:50.0%">
+          <img src="dist/gifs/act/pendulum_ally_fast.gif" alt="ACT-Pendulum Ally" style="width:100.0%">
+        </div>
+        <div class="column" style="width:50.0%">
+          <img src="dist/gifs/act/pendulum_adversary_fast.gif" alt="ACT-Pendulum Adversary" style="width:100.0%">
+        </div>
+      </div>
+    </a>
+    <p><b>What we visualised:</b> We visualised the cosine distance between gradient updates in different parts of the
+      environment. This has previously been used to measure notions of catastrophic interference.</p>
+    <img src="dist/img/ACT-Grads.png" alt="ACT Visualisation" style="width:100.0%">
+    </p>
+    <p><b>What we discovered:</b>Adversarial ACT works by learning to induce catastrophic interference in the learning
+      agent's function approximator. In other words, gradient updates taken at the beginning steps of the environment
+      interfere and cancel out with gradient steps taken at the ending steps of the environment.
+      Allied ACT works by doing the exact opposite way: The gradient steps taken at different parts of the environment
+      are positively correlated, meaning that gradients for steps taken in the beginning help performance at the steps
+      at the end of the episode!
+    </p>
+
+    <p><b>Something Extra in the Paper:</b> We also meta-learned an adversary that learns to encode spurious
+      correlations over the cheap talk channel during training, and then instantly leverage the cheap talk channel at
+      test time to achieve an arbitrary goal! In the gif below, the agent is trained to reach for the blue circle with a
+      given cheap talk channel. At test time, when the cheap talk channel is swapped out, the agent ends up reaching for
+      the yellow one!</p>
+    <a href="https://arxiv.org/abs/2211.11030">
+      <img src="dist/gifs/act/reacher_zeroshot_fast.gif" alt="ACT-Reacher Fast" style="width:100.0%">
+    </a>
+    <h3>Model-Free Opponent Shaping</h3>
+    <a href="https://arxiv.org/abs/2205.01447">
+      <p><b>Link</b></p>
+    </a>
+    <p><b>What we meta-learned:</b> Behaving in the presence of other learning opponents is hard. Existing methods like
+      LOLA use a special update rule to account for the opponent's learning and "shape" them. We instead reformulate
+      this as a meta-learning problem to discover this update rule we call M-FOS.</p>
+    <p><b>What we visualised:</b> We visualised how the policy behaves in the iterated prisoner's dilemma against a
+      learning opponent.</p>
+    <img src="dist/img/mfos_ipd.gif" alt="M-FOS Visualisation" style="width:100.0%">
+    </p>
+    <p><b>What we discovered:</b>M-FOS influences the long-term evolution of the opponent's policy and far outperforms
+      existing learning algorithms. The visualisation above shows that it does this by discovering a policy that is
+      closely related to a sophisticated policy called ZD-Extortion.</p>
+    <img src="dist/img/mfos_results.jpeg" alt="DPO Results" style="width:100.0%">
+
+    <h2>Part 4: Related Works</h2>
+    <p>
+      The ideas described in this blog post builds upon the work of many others. We mentioned some of these above, but
+      would like to provide further links to existing works that we believe would be relevant for readers of this blog.
+    </p>
+
+  </d-article>
+
+  <d-appendix>
+    <h3>Acknowledgements</h3>
+    <p>
+      We thank Geoff Hinton, Ray Kurzweil, GPT-5, and Barack Obama for feedback on drafts of this blog post.
+    </p>
+
+    <h3>Citation</h3>
+    <p>
+      For attribution in academic contexts, please cite this work as
+    </p>
+
+    <pre class="citation short">Lu et al., "Discovered Policy Optimisation", 2022.</pre>
+
+    <p>BibTeX citation</p>
+    <pre class="citation long">
+@article{lu2022discovered,
+  title={Discovered policy optimisation},
+  author={Lu, Chris and Kuba, Jakub Grudzien and Letcher, Alistair and Metz, Luke and de Witt, Christian Schroeder and Foerster, Jakob},
+  booktitle={Advances in Neural Information Processing Systems}
+  year={2022}
+}
+    </pre>
+    <d-bibliography src="dist/bibliography.bib"></d-bibliography>
+  </d-appendix>
+
+</body>
