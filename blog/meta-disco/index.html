@@ -84,7 +84,7 @@
     "title": "Discovery via Accelerated Evolutionary Meta-Learning",
     "description": "Training agents 1000x faster using JAX",
     "published": "April 03, 2023",
-    "pubUrl": "https://arxiv.org/",
+    "pubUrl": "https://arxiv.org/abs/2210.05639",
     "pubVenue": "arXiv",
     "authors": [
       {
@@ -111,22 +111,30 @@
   <d-article>
     <h2>TL;DR</h2>
     <p>
-      We can leverage recent advancements in JAX to train RL agents 1000x faster. This lets us do some pretty cool
-      things.
-      The code is here: <a href="https://github.com/luchris429/FastJaxRL">https://github.com/luchris429/FastJaxRL</a>
+      We can leverage recent advancements in JAX to train parallel RL agents over 1000x faster. This lets us do some
+      really cool things, like:
+    </p>
+    <ul class="list">
+      <li style="list-style-type:circle">&#127939; Efficiently run tons of seeds in parallel on one GPU!</li>
+      <li style="list-style-type:circle">&#128187; Perform rapid hyperparameter tuning!</li>
+      <li style="list-style-type:circle">&#129422; Discover new RL algorithms with meta-evolution!</li>
+    </ul>
+    <p>
+      The simple, self-contained code is here: <a
+        href="https://github.com/luchris429/jitrl">https://github.com/luchris429/jitrl</a>.
     </p>
 
     <h2>Overview</h2>
 
     <p>
       This blog post is about a new computational and experimental paradigm that powers many recent and ongoing works at
-      the Foerster Lab for AI Research (FLAIR) that we call "Discovery via Accelerated Evolutionary Meta-Learning
-      (AEML)". The techniques that power this paradigm have the potential to radically accelerate the
-      rate of progress in Deep Reinforcement Learning (RL) algorithms by more heavily utilising GPU
-      resources, enabled by recent advancements in JAX. AEML vastly lowers the computational barrier of entry to Deep RL
-      research, enabling academic labs to perform research using trillions of frames (closing the gap with industry
-      research labs) and enabling independent researchers to get orders of magnitude more mileage out of limited
-      hardware.
+      the <a href="https://foersterlab.com/">Foerster Lab for AI Research (FLAIR)</a> that we call "Discovery via
+      Accelerated Evolutionary Meta-Learning (AEML)". The techniques that power this paradigm have the potential to
+      radically accelerate the rate of progress in Deep Reinforcement Learning (RL) algorithms by more heavily utilising
+      GPU resources, enabled by recent advancements in JAX. AEML vastly lowers the computational barrier of entry to
+      Deep RL research, enabling academic labs to perform research using trillions of frames (closing the gap with
+      industry research labs) and enabling independent researchers to get orders of magnitude more mileage out of
+      limited hardware.
     </p>
 
     <p>
@@ -135,17 +143,16 @@
       understanding of RL agents and algorithms with evolutionary meta-learning. We will then briefly describe three
       recent papers from our lab that heavily utilised this framework:
     </p>
-
-    <ul>
+    <ul class="list">
       <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2205.01447">Model-Free Opponent Shaping</a>
-        (ICML 2022)</li>
+        (ICML 2022)
+      </li>
       <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2210.05639">Discovered Policy Optimisation</a>
         (NeurIPS 2022)
       </li>
       <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk</a>
         (Preprint)</li>
     </ul>
-
     <h2>Part 1: Accelerating Reinforcement Learning with JAX</h2>
 
     <h3>Section 1.1: Run Everything on the GPU!</h3>
@@ -160,20 +167,20 @@
 
     <p>
       Instead of using multiple threads for our environment, we can use Jax to easily <i>vectorise</i> the environment
-      on the GPU! If we program our environment using Jax primitives, we can use Jax's powerful <i>vmap</i> function to
+      on the GPU! If we program our environment using Jax primitives, we can use Jax's powerful <a
+        href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> function to
       instantly create a vectorised version of the environment. This means that the environments run in parallel on the
       GPU! Luckily for us, a few libraries have already done this for us for a variety of RL environments!
     </p>
 
     <p>
-      Here are a few libraries that we highly recommend and complement each other well:
+      There are a few complementary libraries that we recommend:
 
     <ul>
       <li style="list-style-type:circle"><a href="https://github.com/RobertTLange/gymnax">Gymnax</a> is an awesome
         library that contains several well-known environments such as Classic Control tasks, Bsuite tasks, and Minatar
         (Atari-like) environments. I use it as the go-to library for testing and evaluating my code, and we will use it
-        for this blog post. It has a lot of other really neat features (such as vmappable environment
-        configs!!!) and is very easy to use.
+        for this blog post. It has many other really neat features and is very easy to use.
         <a href="https://github.com/RobertTLange/gymnax">
           <div class="row">
             <div class="column">
@@ -202,7 +209,7 @@
         </a>
 
       </li>
-      <li style="list-style-type:circle"><a href="https://github.com/google/brax">Brax</a> is <b>the</b> way to run
+      <li style="list-style-type:circle"><a href="https://github.com/google/brax">Brax</a> is <i>the</i> way to run
         Mujoco-like continuous control environments using Jax. The library has many RL environments directly analogous
         to popular continuous control environments, such as HalfCheetah and Humanoid. It's also
         differentiable!</li>
@@ -243,6 +250,25 @@
     </ul>
     </p>
 
+    <li style="list-style-type:circle"><a href="https://github.com/sotetsuk/pgx">Pgx</a> Has many popular board games
+      and other environments implemented in Jax. This includes Connect 4, Go, and Poker!</li>
+
+    <a href="https://github.com/sotetsuk/pgx">
+      <div class="row">
+        <div class="column">
+          <img src="dist/gifs/pgx/go_light.gif" alt="Go" style="width:100.0%">
+        </div>
+        <div class="column">
+          <img src="dist/gifs/pgx/go_light.gif" alt="Go" style="width:100.0%">
+        </div>
+        <div class="column">
+          <img src="dist/gifs/pgx/go_light.gif" alt="Go" style="width:100.0%">
+        </div>
+      </div>
+    </a>
+    </ul>
+    </p>
+
     <p>
       Let's look at some of the <a href="https://github.com/RobertTLange/gymnax-blines">reported speedups for Gymnax
         below.</a> CartPole-v1 in numpy, with 10 environments running in parallel, takes 46 seconds to reach one
@@ -268,15 +294,16 @@
     </p> -->
 
     <p>
-      There are many other advantages to doing everything end-to-end in Jax beyond just pure vectorisation. To name a
+      There are many advantages to doing everything end-to-end in Jax. To name a
       few:
 
+      <li style="list-style-type:circle">Vectorising environments on the accelerator allows us to run them quickly.</li>
       <li style="list-style-type:circle">By keeping the computation entirely on the GPU, we avoid the overhead of
-        copying data back and forth between
-        the CPU and GPU, which is often a significant bottleneck.</li>
-      <li style="list-style-type:circle">By JIT compiling our implementation, we can
-        avoid the overhead of Python, which can sometimes block GPU computation between sending commands. </li>
-      <li style="list-style-type:circle">JIT-compilation can lead to significant speedups through operator fusion</li>
+        copying data back and forth between the CPU and GPU, which is often a significant bottleneck.</li>
+      <li style="list-style-type:circle">By <a href="https://jax.readthedocs.io/en/latest/jax-101/02-jitting.html">JIT
+          compiling</a> our implementation, we can avoid the overhead of Python, which can sometimes block GPU
+        computation between sending commands. </li>
+      <li style="list-style-type:circle">JIT compilation can lead to significant speedups through operator fusion</li>
       <li style="list-style-type:circle">It is fully synchronous. Multi-processing for running environments in
         parallel is notoriously difficult to debug and leads to complicated infrastructure.</li>
     </p>
@@ -330,7 +357,7 @@
         achieve the same results but over 10x faster!</figcaption>
     </figure>
 
-    The code for this is shown below and is available at <a href="https://github.com/luchris429/FastJaxRL">this
+    The code for this is shown below and is available at <a href="https://github.com/luchris429/jitrl">this
       repository.</a>
 
     <script src="https://gist.github.com/luchris429/a23d88ac49a299402b83ab1e585b96db.js"></script>
@@ -340,15 +367,17 @@
     <p>
       We got a pretty good speedup from the above tricks. However, it's far from the 1000x speedup in the headline. How
       do we get there? By <u>vectorising the entire RL training loop.</u> This is really easy to do! Just use Jax's
-      <i>vmap</i> we mentioned before! Now we can train many agents in parallel!
+      <a href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> we mentioned before!
+      Now we can train many agents in parallel!
     </p>
 
     <script src="https://gist.github.com/luchris429/3b38cea6d35862fe68431b812f58102e.js"></script>
 
     <p>
-      (Furthermore, we can use Jax's convenient <i>pmap</i> function to run on multiple GPU's! Previously, this type of
-      parallelisation and vectorisation both across and <i>especially</i> within devices would have been a massive
-      headache to write.)
+      (Furthermore, we can use Jax's convenient <a
+        href="https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html"><i>pmap</i></a> function to run on
+      multiple GPU's! Previously, this type of parallelisation and vectorisation both across and <i>especially</i>
+      within devices would have been a massive headache to write.)
     </p>
 
     <figure>
@@ -382,7 +411,7 @@
     </p>
 
     <p>
-      Traditional meta-learning techniques, such as meta-gradients or higher-order derivatives, focus on quickly
+      Traditional meta-learning techniques, which often use meta-gradients or higher-order derivatives, focus on quickly
       adapting to similar but unseen tasks using only a small number of samples. While this works well within specific
       domains, it falls short of achieving general-purpose learning algorithms that can tackle diverse tasks across many
       updates. This limitation becomes even more pronounced when attempting to meta-learn across millions of timesteps
@@ -412,7 +441,7 @@
 
     <p>
       The main criticism of evolutionary methods is that they can be slow and sample-inefficient, often requiring
-      thousands of parameters to be sampled simultaneously. Our "Discovery via Meta-Evolution" framework addresses these
+      thousands of parameters to be sampled simultaneously. This framework addresses these
       concerns by enabling rapid sampling with limited hardware, making the use of evolution in meta-RL an attractive
       and practical option.
     </p>
@@ -422,7 +451,7 @@
         library</a> (He's also the creator of Gymnax!). We can easily hook up our RL training loop to this library and
       use it to perform extremely fast meta-evolution entirely on the GPU. Here's a simple example where we meta-learn
       the value loss function of a PPO agent on the CartPole-v1. You can view the code and follow along in our <a
-        href="https://github.com/luchris429/FastJaxRL/blob/main/examples/example_0.ipynb">provided notebook</a>.
+        href="https://github.com/luchris429/jitrl/blob/main/examples/example_0.ipynb">provided notebook</a>.
     </p>
     <p>
       On a single Nvidia A40, we train 512 agents for 1024 generations. In other words, we trained over half a million
@@ -567,7 +596,6 @@
       would like to provide further links to existing works that we believe would be relevant for readers of this blog.
 
       In particular, we would like to highlight the following papers:
-
       <li> <a href="https://arxiv.org/abs/2211.11260">Lange, Robert Tjarko, et al. "Discovering Evolution Strategies via
           Meta-Black-Box Optimization." The Eleventh International Conference on Learning Representations. 2023.</a>
       </li>
@@ -581,6 +609,11 @@
           learning on a single machine." International Conference on Machine Learning. PMLR, 2022.
         </a>
       </li>
+      <li>
+        <a href="https://arxiv.org/abs/2104.06272">Hessel, Matteo, et al. "Podracer architectures for scalable
+          reinforcement learning." arXiv preprint arXiv:2104.06272 (2021).
+        </a>
+      </li>
     </p>
 
   </d-article>
@@ -588,7 +621,8 @@
   <d-appendix>
     <h3>Acknowledgements</h3>
     <p>
-      We thank Minqi Jiang, Timon Willi, and Robert Lange for feedback on drafts of this blog post.
+      We thank Minqi Jiang, Timon Willi, Robert Lange, and Qizhen (Irene) Zhang for feedback on drafts of this blog
+      post.
     </p>
 
     <h3>Citation</h3>
@@ -600,14 +634,12 @@
 
     <p>BibTeX citation</p>
     <pre class="citation long">
-
     @article{lu2022discovered,
       title={Discovered policy optimisation},
       author={Lu, Chris and Kuba, Jakub Grudzien and Letcher, Alistair and Metz, Luke and de Witt, Christian Schroeder and Foerster, Jakob},
       booktitle={Advances in Neural Information Processing Systems}
       year={2022}
     }
-
     </pre>
     <d-bibliography src="dist/bibliography.bib"></d-bibliography>
   </d-appendix>
