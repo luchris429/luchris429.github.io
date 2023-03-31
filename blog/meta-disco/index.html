@@ -83,7 +83,7 @@
     <script id='distill-front-matter' type="text/json">{
     "title": "Discovery via Accelerated Evolutionary Meta-Learning",
     "description": "Training agents 1000x faster using JAX",
-    "published": "October 14, 2022",
+    "published": "April 03, 2023",
     "pubUrl": "https://arxiv.org/",
     "pubVenue": "arXiv",
     "authors": [
@@ -130,17 +130,20 @@
     </p>
 
     <p>
-      This blog post will be roughly split into two parts. The first will be about the computational techniques that
-      enable this paradigm, and the second will be about how we can effectively leverage these techniques to deepen our
-      understanding of RL agents and algorithms with meta-learning. We will then briefly describe three recent papers
-      from our lab that utilised this framework to great extent:
+      This blog post will be split into two parts. The first will be about the computational techniques that
+      enable this paradigm. The second will discuss how we can effectively leverage these techniques to deepen our
+      understanding of RL agents and algorithms with evolutionary meta-learning. We will then briefly describe three
+      recent papers from our lab that heavily utilised this framework:
     </p>
 
     <ul>
-      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2205.01447">Model-Free Opponent Shaping</a></li>
+      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2205.01447">Model-Free Opponent Shaping</a>
+        (ICML 2022)</li>
       <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2210.05639">Discovered Policy Optimisation</a>
+        (NeurIPS 2022)
       </li>
-      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk</a></li>
+      <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk</a>
+        (Preprint)</li>
     </ul>
 
     <h2>Part 1: Accelerating Reinforcement Learning with JAX</h2>
@@ -149,7 +152,7 @@
 
     <p>
       Most Deep RL implementations run on a combination of CPU and GPU resources. Usually, the environments run on the
-      CPU while the policy neural network and algorithms run on the GPU. Oftentimes, to increase the wallclock time,
+      CPU while the policy neural network and algorithms run on the GPU. To increase the wallclock time,
       practitioners will run multiple environments in parallel using multiple threads. For reference, we will look at
       Costa Huang's amazing <a href="https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py">CleanRL library</a>
       for an example of a well-benchmarked implementation of PPO.
@@ -157,20 +160,19 @@
 
     <p>
       Instead of using multiple threads for our environment, we can use Jax to easily <i>vectorise</i> the environment
-      on the GPU! If we program our environment using Jax primitives, we can use Jax's amazing <i>vmap</i> function to
+      on the GPU! If we program our environment using Jax primitives, we can use Jax's powerful <i>vmap</i> function to
       instantly create a vectorised version of the environment. This means that the environments run in parallel on the
-      GPU! Luckily for us, there are a few libraries that have already done this for us for a variety of RL
-      environments!
+      GPU! Luckily for us, a few libraries have already done this for us for a variety of RL environments!
     </p>
 
     <p>
-      There are a few libraries that we highly recommend and complement each other well:
+      Here are a few libraries that we highly recommend and complement each other well:
 
     <ul>
       <li style="list-style-type:circle"><a href="https://github.com/RobertTLange/gymnax">Gymnax</a> is an awesome
         library that contains several well-known environments such as Classic Control tasks, Bsuite tasks, and Minatar
-        (atari-like) environments. I use it as the go-to library for testing and evaluating my code, and is the one we
-        will be using for this blog post. It has a lot of other really neat features (such as vmappable environment
+        (Atari-like) environments. I use it as the go-to library for testing and evaluating my code, and we will use it
+        for this blog post. It has a lot of other really neat features (such as vmappable environment
         configs!!!) and is very easy to use.
         <a href="https://github.com/RobertTLange/gymnax">
           <div class="row">
@@ -201,8 +203,8 @@
 
       </li>
       <li style="list-style-type:circle"><a href="https://github.com/google/brax">Brax</a> is <b>the</b> way to run
-        Mujoco-like continuous control environments using Jax. The library has many RL environments that are directly
-        analogous to popular continuous control environments, such as HalfCheetah and Humanoid. It's also
+        Mujoco-like continuous control environments using Jax. The library has many RL environments directly analogous
+        to popular continuous control environments, such as HalfCheetah and Humanoid. It's also
         differentiable!</li>
 
       <a href="https://github.com/google/brax">
@@ -222,7 +224,7 @@
       <li style="list-style-type:circle"><a href="https://github.com/instadeepai/jumanji">Jumanji</a> contains a lot of
         incredibly cool, simple, and industry-driven environments. Many of the environments in this library come
         directly from industry settings, ensuring that the environments presented here are practical and relevant for
-        the real-world! These include combinatorial problems such as the famous Traveling Salesman Problem or 3D Bin
+        the real world! These include combinatorial problems such as the famous Traveling Salesman Problem or 3D Bin
         Packing.</li>
 
       <a href="https://github.com/instadeepai/jumanji">
@@ -242,19 +244,19 @@
     </p>
 
     <p>
-      Let's take a look at some of the <a href="https://github.com/RobertTLange/gymnax-blines">reported speedups for
-        Gymnax below.</a> CartPole-v1 in numpy, with 10 environments running in parallel, takes 46 seconds to reach one
-      million frames frames. Using Gymnax on an A100, with 2k environments in parallel, it takes <i>0.05 seconds</i>.
+      Let's look at some of the <a href="https://github.com/RobertTLange/gymnax-blines">reported speedups for Gymnax
+        below.</a> CartPole-v1 in numpy, with 10 environments running in parallel, takes 46 seconds to reach one
+      million frames. Using Gymnax on an A100, with 2k environments in parallel takes <i>0.05 seconds</i>.
       That's a <i>1000x</i> speedup. This applies to environments more complicated than CartPole-v1 as well. For
       example, Minatar-Breakout, which takes 50 seconds to reach one million frames on CPU only takes <i>0.2 seconds</i>
       in Gymnax. These results show an improvement of <i>several orders of magnitude,</i> enabling academic researchers
-      to easily run experiments that potentially involve <i>trillions</i> of frames on limited hardware.
+      to efficiently run experiments involving <i>trillions</i> of frames on limited hardware.
     </p>
     <a href="https://github.com/RobertTLange/gymnax-blines/blob/main/docs/speed.png">
       <img src="dist/img/speed.png" alt="Gymnax Speedups" style="width:100.0%">
     </a>
 
-    <p>
+    <!-- <p>
       Due to <a href="https://en.wikipedia.org/wiki/Amdahl%27s_law">Amdahl's Law</a>, this unfortunately does not equate
       to a 1000x speedup in training time. However, it does mean that we can run many more environments in parallel,
       which can lead to alternative training paradigms for RL. For example, <a
@@ -263,7 +265,7 @@
       a single environment with a rollout length of 2048. While Brax's PPO ultimately ends up being less sample
       efficient, it runs <i>significantly faster.</i> However, this type of wallclock speedup is not what this blog post
       is mainly about.
-    </p>
+    </p> -->
 
     <p>
       There are many other advantages to doing everything end-to-end in Jax beyond just pure vectorisation. To name a
@@ -312,7 +314,7 @@
 
     <p>
       Now, let's swap out the x-axis for the wall-clock time instead of frames. It's over 10x faster without any extra
-      vectorsation.
+      parallel environments.
     </p>
 
     <figure>
@@ -328,6 +330,9 @@
         achieve the same results but over 10x faster!</figcaption>
     </figure>
 
+    The code for this is shown below and is available at <a href="https://github.com/luchris429/FastJaxRL">this
+      repository.</a>
+
     <script src="https://gist.github.com/luchris429/a23d88ac49a299402b83ab1e585b96db.js"></script>
 
     <h3>Section 1.2: Running Many Agents in Parallel</h3>
@@ -335,12 +340,16 @@
     <p>
       We got a pretty good speedup from the above tricks. However, it's far from the 1000x speedup in the headline. How
       do we get there? By <u>vectorising the entire RL training loop.</u> This is really easy to do! Just use Jax's
-      <i>vmap</i> we mentioned before! Now we can train many agents in parallel! Furthermore, to run on multiple GPU's
-      we can just use Jax's convenient <i>pmap</i> function! Previously, this type of vectorisation both across and
-      <i>especially</i> within devices would have been a massive headache to write (believe me, I've tried).
+      <i>vmap</i> we mentioned before! Now we can train many agents in parallel!
     </p>
 
     <script src="https://gist.github.com/luchris429/3b38cea6d35862fe68431b812f58102e.js"></script>
+
+    <p>
+      (Furthermore, we can use Jax's convenient <i>pmap</i> function to run on multiple GPU's! Previously, this type of
+      parallelisation and vectorisation both across and <i>especially</i> within devices would have been a massive
+      headache to write.)
+    </p>
 
     <figure>
       <div class="row">
@@ -353,76 +362,71 @@
       </div>
       <figcaption style="text-align: center;">Figure 3: CleanRL vs. Our Jax PPO on CartPole-v1 and MinAtar-Breakout. We
         can parallelise the agent training itself! On CartPole-v1 we can train 2048 agents in about half the time it
-        takes to a train a single CleanRL agent!</figcaption>
+        takes to train a single CleanRL agent!</figcaption>
     </figure>
 
     <p>
       That's more like it! If you're developing a new RL algorithm, you can easily train on a statistically-significant
-      number of seeds <i>simultaneously on a single GPU</i>. Beyond that, we can we can easily train <i>thousands of
-        agents at the same time!</i> Why would we want to do that?
+      number of seeds <i>simultaneously on a single GPU</i>. Beyond that, we can easily train <i>thousands of agents at
+        the same time!</i> However, why would we want to do that?
     </p>
 
     <h2>Part 2: Discovery via Long-Horizon Evolutionary Meta-Learning</h2>
 
     <p>
-      Very fast, convenient, and parallelisable RL training enables a new meta-learning framework that we use at FLAIR
-      to better analyse and understand the behavior of RL algorithms and agents. We call this framework "Discovery via
-      Meta-Evolution".
+      Meta-learning, or "learning to learn," has the potential to revolutionize the field of reinforcement learning (RL)
+      by discovering general principles and algorithms that can be applied across a broad range of tasks. At FLAIR,
+      we've developed a new meta-learning framework called "Discovery via Meta-Evolution," which leverages evolutionary
+      strategies for improved efficiency and stability. This approach promises to enhance our understanding of RL
+      algorithms and agents, and the advantages it offers are well worth exploring.
     </p>
 
     <p>
-      Meta-Learning is the idea of "Learning to Learn".
-      A very popular approach to do this is through using <i>meta-gradients</i>, or higher-order
-      derivatives. In essence, these methods, the most well-known of which is MAML, take derivativies <i>through their
-        own learning updates</i>. Using these types of techniques, we can optimise our parameters to take into account
-      learning updates, which can then be used to quickly adapt to new tasks.
-      Usually, this is taken in the context of fast adaptation, in which we train models that are able to <i>quickly
-        adapt</i> to similar, but unseen tasks with just a small number of samples. While this is useful for a narrow
-      domains, ideally we would like to be able to meta-learn more general purpose learning algorithms and principles
-      that can be more widely applied to a large range of tasks across many updates.
+      Traditional meta-learning techniques, such as meta-gradients or higher-order derivatives, focus on quickly
+      adapting to similar but unseen tasks using only a small number of samples. While this works well within specific
+      domains, it falls short of achieving general-purpose learning algorithms that can tackle diverse tasks across many
+      updates. This limitation becomes even more pronounced when attempting to meta-learn across millions of timesteps
+      and thousands of updates, as gradient-based methods often result in high variance updates that compromise
+      performance. For more information on the limitations of gradient-based meta-learning, we recommended reading <a
+        href="http://lukemetz.com/exploring-hyperparameter-meta-loss-landscapes-with-jax/">Luke Metz's blog post</a> on
+      the topic.
     </p>
 
     <p>
-      However, if we want to learn to learn across a <i>wide range</i> of tasks, we need to be able to
-      meta-learn across a large number of interactions. In the case of meta-learning <i>RL algorithms</i>, we need to
-      meta-learn across <i>millions</i> of timesteps and <i>thousands</i> of updates. Many papers have shown that
-      gradient-based methods do not perform well in this setting because they result in high variance updates. CITE.
-      Approaches that attempt to reduce this variance tend to increase bias.
+      Evolutionary methods, on the other hand, offer a promising alternative. By treating the underlying problem as a
+      black box and avoiding explicit derivatives, they can efficiently and effectively meta-learn across long horizons.
+      For a comprehensive introduction to these methods, we recommend <a
+        href="https://blog.otoro.net/2017/10/29/visual-evolution-strategies/">David Ha's informative blog post</a>. The
+      key advantages of evolutionary strategies (ES) include:
+    </p>
+
+    <li style="list-style-type:circle"> Agnosticism to the number of learning timesteps</li>
+    <li style="list-style-type:circle"> No concerns with vanishing or exploding gradients</li>
+    <li style="list-style-type:circle"> Unbiased updates</li>
+    <li style="list-style-type:circle"> Lower variance</li>
+    <li style="list-style-type:circle"> Highly parallelisability</li>
+
+    <p>At a high level, this approach mirrors the emergence of learning in nature, where animals have genetically
+      evolved to perform reinforcement learning in their brains
     </p>
 
     <p>
-      Alternatively, we can use evolutionary methods to meta-learn across these long horizons. These methods don't take
-      explicit derivatives through their parameters and instead treat the underlying problem as a blackbox. If you want
-      to learn more about these methods, we highly recommend David Ha's <a
-        href="https://blog.otoro.net/2017/10/29/visual-evolution-strategies/">beautiful blog post on the topic.</a>
-      There are a few reasons these methods are very attractive for this setting. ES methods are:
-      <li style="list-style-type:circle"> Agnostic to the number of learning timesteps</li>
-      <li style="list-style-type:circle"> Not concerned with vanishing or exploding gradients</li>
-      <li style="list-style-type:circle"> Unbiased</li>
-      <li style="list-style-type:circle"> Lower variance</li>
-      <li style="list-style-type:circle"> Highly parallelisable</li>
+      The main criticism of evolutionary methods is that they can be slow and sample-inefficient, often requiring
+      thousands of parameters to be sampled simultaneously. Our "Discovery via Meta-Evolution" framework addresses these
+      concerns by enabling rapid sampling with limited hardware, making the use of evolution in meta-RL an attractive
+      and practical option.
     </p>
 
     <p>
-      At a high level, this is analogous to emergence of learning in real-world evolution -- animals <i>genetically
-        evolved</i> the ability to perform reinforcement learning in their brains.
+      A very nice library for doing this is <a href="https://github.com/RobertTLange/evosax">Robert Lange's evosax
+        library</a> (He's also the creator of Gymnax!). We can easily hook up our RL training loop to this library and
+      use it to perform extremely fast meta-evolution entirely on the GPU. Here's a simple example where we meta-learn
+      the value loss function of a PPO agent on the CartPole-v1. You can view the code and follow along in our <a
+        href="https://github.com/luchris429/FastJaxRL/blob/main/examples/example_0.ipynb">provided notebook</a>.
     </p>
-
     <p>
-      One of the primary criticisms against these methods is that, although they are parallelisable, they are extremely
-      slow and sample inefficient, and usually require the ability to sample thousands of agents at the same time. If
-      only there was a way to efficiently do this!
-    </p>
-
-    <p>
-      A very nice library for doing this is <a href="https://github.com/RobertTLange/evosax">evosax</a>. We can easily
-      hook up our RL training loop to this library and use it to perform extremely fast meta-evolution entirely on the
-      GPU. Here's a simple example where we meta-learn the value loss function of a PPO agent on the CartPole-v1.
-    </p>
-
-    <p>
-      On a single A40, we train 512 agents for 1024 generations. In other words, we trained over half a million agents
-      in ~9 hours on a single GPU! The resulting learned value loss function is shown below.
+      On a single Nvidia A40, we train 512 agents for 1024 generations. In other words, we trained over half a million
+      agents in ~9 hours on a single GPU! The resulting learned value loss function is shown below.
     </p>
 
     <figure>
@@ -439,8 +443,8 @@
     </figure>
 
     <p>
-      Finally, we can try to visualise, interpret, and understand what the learned meta-parameters are doing. In this
-      case, we can simply plot the loss function below.
+      Finally, we visualise, interpret, and understand what the learned meta-parameters are doing. In this
+      case, we plot the loss function below.
     </p>
 
     <figure>
@@ -449,10 +453,8 @@
         <figcaption style="text-align: center;">Figure 5: Meta-Learned Value Distance Function</figcaption>
     </figure>
 
-    <p>That looks pretty interesting! That's pretty interesting and could call for further investigation.</p>
-
-    <p>
-      To summarise, this discovery framework involves:
+    <p>That looks interesting -- it looks nothing like the standard L2 loss! It's not symmetric and it isn't even
+      convex. This could call for further investigation. To summarise, this discovery framework involves:
       <li style="list-style-type:circle">Running everything on the GPU by using Jax.</li>
       <li style="list-style-type:circle">Meta-Learning across entire training trajectories with evolutionary methods.
       </li>
@@ -463,26 +465,51 @@
     <h2>Part 3: Case Studies</h2>
     <p>
       This is a very powerful framework that we use at FLAIR to better understand the behavior of RL algorithms and have
-      used it in several published papers, which we will briefly describe below:
+      used it in several published papers, which you can read below. We will also be releasing future blog posts going
+      more in-depth into these works.
     </p>
 
-    <h3>Discovered Policy Optimisation</h3>
-    <a href="https://arxiv.org/abs/2210.05639">
-      <p><b>Link</b></p>
-    </a>
-    <p><b>What we meta-learned:</b> Many existing RL algorithms can be described by a theoretical framework called
-      "Mirror Learning". We parameterise part of this space of algorithms with a neural network and meta-learn it to
-      discover a new algorithm that outperforms existing ones!</p>
-    <p><b>What we visualised:</b> We visualised what the learned loss function (LPO) looked like with respect to the
-      inputs.</p>
-    <img src="dist/img/dpo_vis.jpeg" alt="DPO Loss Visualisation" style="width:100.0%">
-    </p>
-    <p><b>What we discovered:</b> LPO rediscovers past ideas in the literature, like notions of rollback and optimism,
-      along with some novel features, which we combine to create a closed-form analytical version of the algorithm we
-      call DPO that outperforms PPO on unseen tasks.</p>
-    <img src="dist/img/dpo_results.jpeg" alt="DPO Results" style="width:100.0%">
+    <h3><a href="https://arxiv.org/abs/2210.05639">Discovered Policy Optimisation (NeurIPS 2022)</a></h3>
 
-    <h3>Adversarial Cheap Talk</h3>
+    <p><a href="https://arxiv.org/abs/2210.05639"><b>https://arxiv.org/abs/2210.05639</b></a></p>
+
+    <blockquote class="twitter-tweet">
+      <p lang="en" dir="ltr">Deep RL has been driven by improvements in handcrafted algorithms. Our NeurIPS 2022 paper,
+        “Discovered Policy Optimisation” instead meta-learns in a space of theoretically-sound algorithms and beats PPO
+        on unseen tasks! w/ <a href="https://twitter.com/kuba_AI?ref_src=twsrc%5Etfw">@kuba_AI</a> <a
+          href="https://twitter.com/_aletcher?ref_src=twsrc%5Etfw">@_aletcher</a> <a
+          href="https://twitter.com/Luke_Metz?ref_src=twsrc%5Etfw">@Luke_Metz</a> <a
+          href="https://twitter.com/casdewitt?ref_src=twsrc%5Etfw">@casdewitt</a> <a
+          href="https://twitter.com/j_foerst?ref_src=twsrc%5Etfw">@j_foerst</a> 🧵 <a
+          href="https://t.co/H4Zp3siuZH">pic.twitter.com/H4Zp3siuZH</a></p>&mdash; Chris Lu (@_chris_lu_) <a
+        href="https://twitter.com/_chris_lu_/status/1595388750330155010?ref_src=twsrc%5Etfw">November 23, 2022</a>
+    </blockquote>
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    <h3><a href="https://arxiv.org/abs/2205.01447">Model-Free Opponent Shaping (ICML 2022)</a></h3>
+
+    <p><a href="https://arxiv.org/abs/2205.01447"><b>https://arxiv.org/abs/2205.01447</b></a></p>
+
+    <blockquote class="twitter-tweet">
+      <p lang="en" dir="ltr">General-sum games describe many scenarios, from negotiations to autonomous driving. How
+        should an AI act in the presence of other learning agents? Our <a
+          href="https://twitter.com/icmlconf?ref_src=twsrc%5Etfw">@icmlconf</a> 2022 paper, “Model-Free Opponent
+        Shaping”(M-FOS) approaches this as a meta-game. <a
+          href="https://twitter.com/_chris_lu_?ref_src=twsrc%5Etfw">@_chris_lu_</a> <a
+          href="https://twitter.com/TimonWilli?ref_src=twsrc%5Etfw">@TimonWilli</a> <a
+          href="https://twitter.com/casdewitt?ref_src=twsrc%5Etfw">@casdewitt</a> 🧵 <a
+          href="https://t.co/wshwxpTNTP">pic.twitter.com/wshwxpTNTP</a></p>&mdash; Jakob Foerster (@j_foerst) <a
+        href="https://twitter.com/j_foerst/status/1547245398825345025?ref_src=twsrc%5Etfw">July 13, 2022</a>
+    </blockquote>
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    <h3><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk (Preprint)</a></h3>
+
+    <p><a href="https://arxiv.org/abs/2211.11030"><b>https://arxiv.org/abs/2211.11030</b></a></p>
+
+    <p>Tweet Thread TBD</p>
+
+    <!-- <h3>Adversarial Cheap Talk</h3>
     <a href="https://arxiv.org/abs/2211.11030">
       <p><b>Link</b></p>
     </a>
@@ -532,27 +559,28 @@
       the yellow one!</p>
     <a href="https://arxiv.org/abs/2211.11030">
       <img src="dist/gifs/act/reacher_zeroshot_fast.gif" alt="ACT-Reacher Fast" style="width:100.0%">
-    </a>
-    <h3>Model-Free Opponent Shaping</h3>
-    <a href="https://arxiv.org/abs/2205.01447">
-      <p><b>Link</b></p>
-    </a>
-    <p><b>What we meta-learned:</b> Behaving in the presence of other learning opponents is hard. Existing methods like
-      LOLA use a special update rule to account for the opponent's learning and "shape" them. We instead reformulate
-      this as a meta-learning problem to discover this update rule we call M-FOS.</p>
-    <p><b>What we visualised:</b> We visualised how the policy behaves in the iterated prisoner's dilemma against a
-      learning opponent.</p>
-    <img src="dist/img/mfos_ipd.gif" alt="M-FOS Visualisation" style="width:100.0%">
-    </p>
-    <p><b>What we discovered:</b>M-FOS influences the long-term evolution of the opponent's policy and far outperforms
-      existing learning algorithms. The visualisation above shows that it does this by discovering a policy that is
-      closely related to a sophisticated policy called ZD-Extortion.</p>
-    <img src="dist/img/mfos_results.jpeg" alt="DPO Results" style="width:100.0%">
+    </a> -->
 
     <h2>Part 4: Related Works</h2>
     <p>
       The ideas described in this blog post builds upon the work of many others. We mentioned some of these above, but
       would like to provide further links to existing works that we believe would be relevant for readers of this blog.
+
+      In particular, we would like to highlight the following papers:
+
+      <li> <a href="https://arxiv.org/abs/2211.11260">Lange, Robert Tjarko, et al. "Discovering Evolution Strategies via
+          Meta-Black-Box Optimization." The Eleventh International Conference on Learning Representations. 2023.</a>
+      </li>
+      <li><a href="https://arxiv.org/abs/1802.04821">Houthooft, Rein, et al. "Evolved policy gradients." Advances in
+          Neural Information Processing Systems 31 (2018). </a>
+      </li>
+      <li><a href="https://arxiv.org/abs/2111.05803">Metz, Luke, et al. "Gradients are not all you need." arXiv preprint
+          arXiv:2111.05803 (2021). </a>
+      </li>
+      <li><a href="https://arxiv.org/abs/2206.08888">Flajolet, Arthur, et al. "Fast population-based reinforcement
+          learning on a single machine." International Conference on Machine Learning. PMLR, 2022.
+        </a>
+      </li>
     </p>
 
   </d-article>
@@ -572,12 +600,14 @@
 
     <p>BibTeX citation</p>
     <pre class="citation long">
-@article{lu2022discovered,
-  title={Discovered policy optimisation},
-  author={Lu, Chris and Kuba, Jakub Grudzien and Letcher, Alistair and Metz, Luke and de Witt, Christian Schroeder and Foerster, Jakob},
-  booktitle={Advances in Neural Information Processing Systems}
-  year={2022}
-}
+
+    @article{lu2022discovered,
+      title={Discovered policy optimisation},
+      author={Lu, Chris and Kuba, Jakub Grudzien and Letcher, Alistair and Metz, Luke and de Witt, Christian Schroeder and Foerster, Jakob},
+      booktitle={Advances in Neural Information Processing Systems}
+      year={2022}
+    }
+
     </pre>
     <d-bibliography src="dist/bibliography.bib"></d-bibliography>
   </d-appendix>
