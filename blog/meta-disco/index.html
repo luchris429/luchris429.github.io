@@ -16,20 +16,22 @@
 <!doctype html>
 
 <head>
-  <title>Discovery via Accelerated Evolutionary Meta-Learning</title>
+  <title>Blazingly-Fast Deep RL: Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL</title>
   <!-- <title>Really Fast Reinforcement</title> -->
   <meta name="description" content="Web publication for &quot;Discovered Policy Optimisation&quot;." />
   <!-- TODO: Need to add urls to images for metadata -->
-  <meta property="og:url" content="https://wesolvedagi.github.io" />
-  <meta property="og:title" content="Discovery via Accelerated Evolutionary Meta-Learning" />
+  <meta property="og:url" content="https://chrislu.page/blog/meta-disco/" />
+  <meta property="og:title"
+    content="Blazingly-Fast Deep RL: Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL" />
   <meta property="og:description"
-    content="Web publication for &quot;Discovery via Accelerated Evolutionary Meta-Learning&quot;" />
+    content="Web publication for &quot;Blazingly-Fast Deep RL: Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL&quot;" />
   <meta property="og:image" content="og-image.png" />
   <meta property="og:image:url" content="og-image.png" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Discovery via Accelerated Evolutionary Meta-Learning" />
+  <meta name="twitter:title"
+    content="Blazingly-Fast Deep RL: Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL" />
   <meta name="twitter:description"
-    content="Web publication for &quot;Discovery via Accelerated Evolutionary Meta-Learning&quot;." />
+    content="Web publication for &quot;Blazingly-Fast Deep RL: Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL&quot;." />
   <meta name="twitter:image" content="" />
   <meta name="twitter:image:secure_url" content="" />
 
@@ -81,7 +83,7 @@
 <body>
   <d-front-matter>
     <script id='distill-front-matter' type="text/json">{
-    "title": "Discovery via Accelerated Evolutionary Meta-Learning",
+    "title": "Blazingly-Fast Deep RL: Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL",
     "description": "Training agents 1000x faster using JAX",
     "published": "April 03, 2023",
     "pubUrl": "https://arxiv.org/abs/2210.05639",
@@ -111,8 +113,8 @@
   <d-article>
     <h2>TL;DR</h2>
     <p>
-      We can leverage recent advancements in JAX to train parallel RL agents over 1000x faster. This lets us do some
-      really cool things, like:
+      We can leverage recent advancements in JAX to train parallel RL agents over 1000x faster on a single GPU. This
+      lets us do some really cool things, like:
     </p>
     <ul class="list">
       <li style="list-style-type:circle">&#127939; Efficiently run tons of seeds in parallel on one GPU!</li>
@@ -121,20 +123,21 @@
     </ul>
     <p>
       The simple, self-contained code is here: <a
-        href="https://github.com/luchris429/jitrl">https://github.com/luchris429/jitrl</a>.
+        href="https://github.com/luchris429/purejaxrl">https://github.com/luchris429/purejaxrl</a>.
     </p>
 
     <h2>Overview</h2>
 
     <p>
-      This blog post is about a new computational and experimental paradigm that powers many recent and ongoing works at
-      the <a href="https://foersterlab.com/">Foerster Lab for AI Research (FLAIR)</a> that we call "Discovery via
-      Accelerated Evolutionary Meta-Learning (AEML)". The techniques that power this paradigm have the potential to
-      radically accelerate the rate of progress in Deep Reinforcement Learning (RL) algorithms by more heavily utilising
-      GPU resources, enabled by recent advancements in JAX. AEML vastly lowers the computational barrier of entry to
-      Deep RL research, enabling academic labs to perform research using trillions of frames (closing the gap with
-      industry research labs) and enabling independent researchers to get orders of magnitude more mileage out of
-      limited hardware.
+      This blog post is about a computational and experimental paradigm that powers many recent and ongoing works at
+      the <a href="https://foersterlab.com/">Foerster Lab for AI Research (FLAIR)</a> that efficiently utilises GPU
+      resources to meta-evolve new discoveries in Deep RL. The techniques that power this paradigm have the potential
+      radically accelerate the rate of progress in Deep Reinforcement Learning (RL) research by more heavily utilising
+      GPU resources, enabled by recent advancements in JAX. The codebase, <a
+        href="https://github.com/luchris429/purejaxrl">PureJaxRL</a>, vastly lowers the computational
+      barrier of entry to Deep RL research, enabling academic labs to perform research using trillions of frames
+      (closing the gap with industry research labs) and enabling independent researchers to get orders of magnitude more
+      mileage out of a single GPU.
     </p>
 
     <p>
@@ -153,7 +156,7 @@
       <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk</a>
         (Preprint)</li>
     </ul>
-    <h2>Part 1: Accelerating Reinforcement Learning with JAX</h2>
+    <h2>Part 1: 1000x Speedups with PureJaxRL</h2>
 
     <h3>Section 1.1: Run Everything on the GPU!</h3>
 
@@ -357,7 +360,7 @@
         achieve the same results but over 10x faster!</figcaption>
     </figure>
 
-    The code for this is shown below and is available at <a href="https://github.com/luchris429/jitrl">this
+    The code for this is shown below and is available at <a href="https://github.com/luchris429/purejaxrl">this
       repository.</a>
 
     <script src="https://gist.github.com/luchris429/a23d88ac49a299402b83ab1e585b96db.js"></script>
@@ -397,17 +400,20 @@
     <p>
       That's more like it! If you're developing a new RL algorithm, you can easily train on a statistically-significant
       number of seeds <i>simultaneously on a single GPU</i>. Beyond that, we can easily train <i>thousands of agents at
-        the same time!</i> However, why would we want to do that?
+        the same time!</i> In our <a
+        href="https://github.com/luchris429/purejaxrl/blob/main/examples/example_0.ipynb">provided notebook</a>, we show
+      how
+      to use this for rapid hyperparameter search. However, we can also use this for evolutionary meta-learning!
     </p>
 
-    <h2>Part 2: Discovery via Long-Horizon Evolutionary Meta-Learning</h2>
+    <h2>Part 2: Meta-Evolving Discoveries for Deep RL</h2>
 
     <p>
       Meta-learning, or "learning to learn," has the potential to revolutionize the field of reinforcement learning (RL)
       by discovering general principles and algorithms that can be applied across a broad range of tasks. At FLAIR,
-      we've developed a new meta-learning framework called "Discovery via Meta-Evolution," which leverages evolutionary
-      strategies for improved efficiency and stability. This approach promises to enhance our understanding of RL
-      algorithms and agents, and the advantages it offers are well worth exploring.
+      we use the above computational technique to power new discoveries with Meta-RL by using evolution. This
+      approach promises to enhance our understanding of RL algorithms and agents, and the advantages it offers are well
+      worth exploring.
     </p>
 
     <p>
@@ -441,7 +447,7 @@
 
     <p>
       The main criticism of evolutionary methods is that they can be slow and sample-inefficient, often requiring
-      thousands of parameters to be sampled simultaneously. This framework addresses these
+      thousands of parameters to be evaluated simultaneously. This framework addresses these
       concerns by enabling rapid sampling with limited hardware, making the use of evolution in meta-RL an attractive
       and practical option.
     </p>
@@ -451,7 +457,7 @@
         library</a> (He's also the creator of Gymnax!). We can easily hook up our RL training loop to this library and
       use it to perform extremely fast meta-evolution entirely on the GPU. Here's a simple example where we meta-learn
       the value loss function of a PPO agent on the CartPole-v1. You can view the code and follow along in our <a
-        href="https://github.com/luchris429/jitrl/blob/main/examples/example_0.ipynb">provided notebook</a>.
+        href="https://github.com/luchris429/purejaxrl/blob/main/examples/example_0.ipynb">provided notebook</a>.
     </p>
     <p>
       On a single Nvidia A40, we train 512 agents for 1024 generations. In other words, we trained over half a million
@@ -483,7 +489,7 @@
     </figure>
 
     <p>That looks interesting -- it looks nothing like the standard L2 loss! It's not symmetric and it isn't even
-      convex. This could call for further investigation. To summarise, this discovery framework involves:
+      convex. This could call for further investigation. To summarise, the meta-evolving discovery framework involves:
       <li style="list-style-type:circle">Running everything on the GPU by using Jax.</li>
       <li style="list-style-type:circle">Meta-Learning across entire training trajectories with evolutionary methods.
       </li>
