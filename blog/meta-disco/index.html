@@ -93,7 +93,9 @@
         "author":"Chris Lu",
         "authorURL":"https://chrislu.page",
         "affiliations": [
-          {"name": "University of Oxford", "url":"https://twitter.com/_chris_lu_"}]
+          {"name": "University of Oxford", "url":"https://www.ox.ac.uk/"},
+          {"name": "Foerster Lab for AI Research", "url":"https://www.foersterlab.com/"}
+          ]
       }
     ],
     "katex": {
@@ -113,13 +115,14 @@
   <d-article>
     <h2>TL;DR</h2>
     <p>
-      We can leverage recent advancements in JAX to train parallel RL agents over 1000x faster on a single GPU. This
-      lets us do some really cool things, like:
+      We can leverage recent advancements in <a href="https://github.com/google/jax">JAX</a> to train parallelised RL
+      agents over 1000x faster entirely on GPUs. Unlike past RL implementations, ours is written end-to-end in
+      Jax. This enables RL researchers to do things like:
     </p>
     <ul class="list">
-      <li style="list-style-type:circle">&#127939; Efficiently run tons of seeds in parallel on one GPU!</li>
-      <li style="list-style-type:circle">&#128187; Perform rapid hyperparameter tuning!</li>
-      <li style="list-style-type:circle">&#129422; Discover new RL algorithms with meta-evolution!</li>
+      <li style="list-style-type:circle">&#127939; Efficiently run tons of seeds in parallel on one GPU</li>
+      <li style="list-style-type:circle">&#128187; Perform rapid hyperparameter tuning</li>
+      <li style="list-style-type:circle">&#129422; Discover new RL algorithms with meta-evolution</li>
     </ul>
     <p>
       The simple, self-contained code is here: <a
@@ -163,18 +166,18 @@
     <p>
       Most Deep RL implementations run on a combination of CPU and GPU resources. Usually, the environments run on the
       CPU while the policy neural network and algorithms run on the GPU. To increase the wallclock time,
-      practitioners will run multiple environments in parallel using multiple threads. For reference, we will look at
+      practitioners run multiple environments in parallel using multiple threads. We will look at
       Costa Huang's amazing <a href="https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py">CleanRL library</a>
-      for an example of a well-benchmarked implementation of PPO.
+      as an example of a well-benchmarked implementation of PPO under this "standard" paradigm.
     </p>
 
     <p>
-      Instead of using multiple threads for our environment, we can use Jax to easily <i>vectorise</i> the environment
-      on the GPU! If we program our environment using Jax primitives, we can use Jax's powerful <a
+      Instead of using multiple threads for our environment, we can use Jax to <i>vectorise</i> the environment and run
+      it on the GPU! Not only does this allow us to avoid having to transfer data between the CPU and GPU, but if we
+      program our environment using Jax primitives, we can use Jax's powerful <a
         href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> function to
-      instantly create a vectorised version of the environment. This means that the environments run in parallel on the
-      GPU! Luckily for us, a few libraries have already done this for us for a variety of RL environments!
-    </p>
+      instantly create a vectorised version of the environment. Luckily for us, a few libraries have already done this
+      for us for a variety of RL environments.</p>
 
     <p>
       There are a few complementary libraries that we recommend:
@@ -304,7 +307,7 @@
       <li style="list-style-type:circle">By keeping the computation entirely on the GPU, we avoid the overhead of
         copying data back and forth between the CPU and GPU, which is often a significant bottleneck.</li>
       <li style="list-style-type:circle">By <a href="https://jax.readthedocs.io/en/latest/jax-101/02-jitting.html">JIT
-          compiling</a> our implementation, we can avoid the overhead of Python, which can sometimes block GPU
+          compiling</a> our implementation, we avoid the overhead of Python, which sometimes block GPU
         computation between sending commands. </li>
       <li style="list-style-type:circle">JIT compilation can lead to significant speedups through operator fusion</li>
       <li style="list-style-type:circle">It is fully synchronous. Multi-processing for running environments in
@@ -360,8 +363,10 @@
         achieve the same results but over 10x faster!</figcaption>
     </figure>
 
-    The code for this is shown below and is available at <a href="https://github.com/luchris429/purejaxrl">this
-      repository.</a>
+    <p>
+      The code for this is shown below and is available at <a href="https://github.com/luchris429/purejaxrl">this
+        repository.</a> It's all within a single readable file, so it is easy to use!
+    </p>
 
     <script src="https://gist.github.com/luchris429/a23d88ac49a299402b83ab1e585b96db.js"></script>
 
@@ -371,7 +376,7 @@
       We got a pretty good speedup from the above tricks. However, it's far from the 1000x speedup in the headline. How
       do we get there? By <u>vectorising the entire RL training loop.</u> This is really easy to do! Just use Jax's
       <a href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> we mentioned before!
-      Now we can train many agents in parallel!
+      Now we can train many agents in parallel.
     </p>
 
     <script src="https://gist.github.com/luchris429/3b38cea6d35862fe68431b812f58102e.js"></script>
@@ -398,12 +403,12 @@
     </figure>
 
     <p>
-      That's more like it! If you're developing a new RL algorithm, you can easily train on a statistically-significant
-      number of seeds <i>simultaneously on a single GPU</i>. Beyond that, we can easily train <i>thousands of agents at
-        the same time!</i> In our <a
-        href="https://github.com/luchris429/purejaxrl/blob/main/examples/example_0.ipynb">provided notebook</a>, we show
-      how
-      to use this for rapid hyperparameter search. However, we can also use this for evolutionary meta-learning!
+      That's more like it! If you're developing a new RL algorithm, you can quickly train on a statistically-significant
+      number of seeds <i>simultaneously on a single GPU</i>. Beyond that, we can train <i>thousands of independent
+        agents at the same time!</i> In the <a
+        href="https://github.com/luchris429/purejaxrl/blob/main/examples/example_0.ipynb">notebook we provide</a>, we
+      show how to use this for rapid hyperparameter search. However, we can also use this for evolutionary
+      meta-learning!
     </p>
 
     <h2>Part 2: Meta-Evolving Discoveries for Deep RL</h2>
@@ -429,9 +434,9 @@
 
     <p>
       Evolutionary methods, on the other hand, offer a promising alternative. By treating the underlying problem as a
-      black box and avoiding explicit derivatives, they can efficiently and effectively meta-learn across long horizons.
-      For a comprehensive introduction to these methods, we recommend <a
-        href="https://blog.otoro.net/2017/10/29/visual-evolution-strategies/">David Ha's informative blog post</a>. The
+      black box and avoiding explicitly calculating derivatives, they can efficiently and effectively meta-learn across
+      long horizons. For a comprehensive introduction to these methods, we recommend <a
+        href="https://blog.otoro.net/2017/10/29/visual-evolution-strategies/">David Ha's blog post</a>. The
       key advantages of evolutionary strategies (ES) include:
     </p>
 
@@ -448,20 +453,26 @@
     <p>
       The main criticism of evolutionary methods is that they can be slow and sample-inefficient, often requiring
       thousands of parameters to be evaluated simultaneously. This framework addresses these
-      concerns by enabling rapid sampling with limited hardware, making the use of evolution in meta-RL an attractive
-      and practical option.
+      concerns by enabling rapid parallel evaluation with limited hardware, making the use of evolution in meta-RL an
+      attractive and practical option.
     </p>
 
     <p>
-      A very nice library for doing this is <a href="https://github.com/RobertTLange/evosax">Robert Lange's evosax
+      A good library for doing this is <a href="https://github.com/RobertTLange/evosax">Robert Lange's evosax
         library</a> (He's also the creator of Gymnax!). We can easily hook up our RL training loop to this library and
-      use it to perform extremely fast meta-evolution entirely on the GPU. Here's a simple example where we meta-learn
-      the value loss function of a PPO agent on the CartPole-v1. You can view the code and follow along in our <a
+      use it to perform extremely fast meta-evolution entirely on the GPU. Here's a simple example from an upcoming
+      project where we meta-learn the value loss function of a PPO agent on the CartPole-v1. While L2 loss is the most
+      popular choice for the value loss in PPO, we can instead parameterise this with a neural network and evolve it! On
+      the outer loop, we sample the parameters for this neural network (which we will call meta-parameters), and on the
+      inner loop we train RL agents from scratch using those meta-parameters for the value loss function. You can view
+      the code and follow along in our <a
         href="https://github.com/luchris429/purejaxrl/blob/main/examples/example_0.ipynb">provided notebook</a>.
     </p>
+
     <p>
-      On a single Nvidia A40, we train 512 agents for 1024 generations. In other words, we trained over half a million
-      agents in ~9 hours on a single GPU! The resulting learned value loss function is shown below.
+      On a single Nvidia A40, we train 512 agents for 1024 generations, churning through over one hundred billion
+      frames. In other words, we trained over half a million agents in ~9 hours on a single GPU! The resulting
+      meta-learned value loss function is shown below.
     </p>
 
     <figure>
@@ -489,11 +500,12 @@
     </figure>
 
     <p>That looks interesting -- it looks nothing like the standard L2 loss! It's not symmetric and it isn't even
-      convex. This could call for further investigation. To summarise, the meta-evolving discovery framework involves:
+      convex. This is currently ongoing preliminary work from an upcoming project. To summarise, the meta-evolving
+      discovery framework involves:
       <li style="list-style-type:circle">Running everything on the GPU by using Jax.</li>
       <li style="list-style-type:circle">Meta-Learning across entire training trajectories with evolutionary methods.
       </li>
-      <li style="list-style-type:circle">Interperting the learned meta-parameters to "discover" new insights about
+      <li style="list-style-type:circle">Interpreting the learned meta-parameters to "discover" new insights about
         learning algorithms.</li>
     </p>
 
@@ -627,8 +639,8 @@
   <d-appendix>
     <h3>Acknowledgements</h3>
     <p>
-      We thank Minqi Jiang, Timon Willi, Robert Lange, and Qizhen (Irene) Zhang for feedback on drafts of this blog
-      post.
+      We thank Jakob Foerster, Minqi Jiang, Timon Willi, Robert Lange, and Qizhen (Irene) Zhang for feedback on drafts
+      of this blog post.
     </p>
 
     <h3>Citation</h3>
