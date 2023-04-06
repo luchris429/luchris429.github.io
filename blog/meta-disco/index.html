@@ -29,9 +29,9 @@
   <meta property="og:image" content="og-image.png" />
   <meta property="og:image:url" content="og-image.png" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL" />
+  <meta name="twitter:title" content="Achieving 4000x Speedups and Meta-Evolving Discoveries with PureJaxRL" />
   <meta name="twitter:description"
-    content="Web publication for &quot;Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL&quot;." />
+    content="Web publication for &quot;Achieving 4000x Speedups and Meta-Evolving Discoveries with PureJaxRL&quot;." />
   <meta name="twitter:image" content="" />
   <meta name="twitter:image:secure_url" content="" />
 
@@ -83,8 +83,8 @@
 <body>
   <d-front-matter>
     <script id='distill-front-matter' type="text/json">{
-    "title": "Achieving 1000x Speedups and Meta-Evolving Discoveries with PureJaxRL",
-    "description": "Training agents 1000x faster using JAX",
+    "title": "Achieving 4000x Speedups and Meta-Evolving Discoveries with PureJaxRL",
+    "description": "Training agents 4000x faster using JAX",
     "published": "April 03, 2023",
     "pubUrl": "https://arxiv.org/abs/2210.05639",
     "pubVenue": "arXiv",
@@ -116,7 +116,7 @@
     <h2>TL;DR</h2>
     <p>
       We can leverage recent advancements in <a href="https://github.com/google/jax">JAX</a> to train parallelised RL
-      agents over 1000x faster entirely on GPUs. Unlike past RL implementations, ours is written end-to-end in
+      agents over 4000x faster entirely on GPUs. Unlike past RL implementations, ours is written end-to-end in
       Jax. This enables RL researchers to do things like:
     </p>
     <ul class="list">
@@ -159,7 +159,7 @@
       <li style="list-style-type:circle"><a href="https://arxiv.org/abs/2211.11030">Adversarial Cheap Talk</a>
         (Preprint)</li>
     </ul>
-    <h2>Part 1: 1000x Speedups with PureJaxRL</h2>
+    <h2>Part 1: Over 4000x Speedups with PureJaxRL</h2>
 
     <h3>Section 1.1: Run Everything on the GPU!</h3>
 
@@ -176,8 +176,8 @@
       it on the GPU! Not only does this allow us to avoid having to transfer data between the CPU and GPU, but if we
       program our environment using Jax primitives, we can use Jax's powerful <a
         href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> function to
-      instantly create a vectorised version of the environment. Luckily for us, a few libraries have already done this
-      for us for a variety of RL environments.</p>
+      instantly create a vectorised version of the environment. While re-writing RL environments in Jax can be time
+      consuming, luckily for us, a few libraries have already done this for us for a variety of environments.</p>
 
     <p>
       There are a few complementary libraries that we recommend:
@@ -309,7 +309,8 @@
       <li style="list-style-type:circle">By <a href="https://jax.readthedocs.io/en/latest/jax-101/02-jitting.html">JIT
           compiling</a> our implementation, we avoid the overhead of Python, which sometimes block GPU
         computation between sending commands. </li>
-      <li style="list-style-type:circle">JIT compilation can lead to significant speedups through operator fusion</li>
+      <li style="list-style-type:circle">JIT compilation can lead to significant speedups through operator fusion. In
+        other words, it optimises memory usage on the GPU.</li>
       <li style="list-style-type:circle">It is fully synchronous. Multi-processing for running environments in
         parallel is notoriously difficult to debug and leads to complicated infrastructure.</li>
     </p>
@@ -373,7 +374,7 @@
     <h3>Section 1.2: Running Many Agents in Parallel</h3>
 
     <p>
-      We got a pretty good speedup from the above tricks. However, it's far from the 1000x speedup in the headline. How
+      We got a pretty good speedup from the above tricks. However, it's far from the 4000x speedup in the headline. How
       do we get there? By <u>vectorising the entire RL training loop.</u> This is really easy to do! Just use Jax's
       <a href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> we mentioned before!
       Now we can train many agents in parallel.
@@ -443,7 +444,7 @@
     <li style="list-style-type:circle"> Agnosticism to the number of learning timesteps</li>
     <li style="list-style-type:circle"> No concerns with vanishing or exploding gradients</li>
     <li style="list-style-type:circle"> Unbiased updates</li>
-    <li style="list-style-type:circle"> Lower variance</li>
+    <li style="list-style-type:circle"> Often Lower variance</li>
     <li style="list-style-type:circle"> Highly parallelisability</li>
 
     <p>At a high level, this approach mirrors the emergence of learning in nature, where animals have genetically
@@ -461,11 +462,11 @@
       A good library for doing this is <a href="https://github.com/RobertTLange/evosax">Robert Lange's evosax
         library</a> (He's also the creator of Gymnax!). We can easily hook up our RL training loop to this library and
       use it to perform extremely fast meta-evolution entirely on the GPU. Here's a simple example from an upcoming
-      project where we meta-learn the value loss function of a PPO agent on the CartPole-v1. While L2 loss is the most
-      popular choice for the value loss in PPO, we can instead parameterise this with a neural network and evolve it! On
-      the outer loop, we sample the parameters for this neural network (which we will call meta-parameters), and on the
-      inner loop we train RL agents from scratch using those meta-parameters for the value loss function. You can view
-      the code and follow along in our <a
+      project. (Keep your eyes peeled for our paper on this!) In this example, we meta-learn the value loss
+      function of a PPO agent on CartPole-v1. While L2 loss is the most popular choice for the value loss in PPO, we
+      can instead parameterise this with a neural network and evolve it! On the outer loop, we sample the parameters for
+      this neural network (which we will call meta-parameters), and on the inner loop we train RL agents from scratch
+      using those meta-parameters for the value loss function. You can view the code and follow along in our <a
         href="https://github.com/luchris429/purejaxrl/blob/main/examples/example_0.ipynb">provided notebook</a>.
     </p>
 
