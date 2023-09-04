@@ -185,8 +185,11 @@
       it on the GPU! Not only does this allow us to avoid having to transfer data between the CPU and GPU, but if we
       program our environment using Jax primitives, we can use Jax's powerful <a
         href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html"><i>vmap</i></a> function to
-      instantly create a vectorised version of the environment. While re-writing RL environments in Jax can be time
-      consuming, luckily for us, a few libraries have already done this for us for a variety of environments.</p>
+      instantly create a vectorised version of the environment. If you're unfamiliar with Jax and vmap, I would
+      recommend reading <a href="https://twitter.com/jakevdp/status/1612544608646606849?s=20">Jake VanderPlas's twitter
+        thread on it</a> and the <a href="https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html">Jax
+        documentation</a>. While re-writing RL environments in Jax can be time consuming, luckily for us, a few
+      libraries have already done this for us for a variety of environments.</p>
 
     <p>
       There are a few complementary libraries that we recommend:
